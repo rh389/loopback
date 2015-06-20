@@ -160,6 +160,19 @@ module.exports = function(AccessToken) {
     }
   };
 
+  /**
+   * Set the created time on the token to now, and save it.
+   *
+   * @callback {Function} callback
+   * @param {Error} err
+   * @param {AccessToken} token
+   */
+
+  AccessToken.prototype.renew = function(cb) {
+    this.created = new Date();
+    this.save(cb);
+  };
+
   function tokenIdForRequest(req, options) {
     var params = options.params || [];
     var headers = options.headers || [];

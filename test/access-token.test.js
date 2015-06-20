@@ -240,6 +240,22 @@ describe('AccessToken', function() {
         opts);
     }
   });
+
+  describe('.renew()', function() {
+    before(createExpiredTestingToken);
+
+    it('updates the creation time to now', function(done) {
+      //Token is old before we renew it
+      assert(Date.now() - this.expiredToken.created.getTime() > 1000);
+
+      this.expiredToken.renew(function(err, token) {
+        assert(!err);
+        //Token is now new
+        assert(Math.abs(Date.now() - token.created.getTime()) < 1000);
+        done();
+      });
+    });
+  });
 });
 
 describe('app.enableAuth()', function() {
