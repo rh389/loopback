@@ -6,7 +6,7 @@ Token.attachTo(ds);
 var ACL = loopback.ACL;
 
 describe('loopback.token(options)', function() {
-  beforeEach(createTestingToken);
+  beforeEach(createValidTestingToken);
 
   it('should populate req.token from the query string', function(done) {
     createTestAppAndRequest(this.token, done)
@@ -178,7 +178,7 @@ describe('loopback.token(options)', function() {
 });
 
 describe('AccessToken', function() {
-  beforeEach(createTestingToken);
+  beforeEach(createValidTestingToken);
 
   it('should auto-generate id', function() {
     assert(this.token.id);
@@ -190,15 +190,27 @@ describe('AccessToken', function() {
     assert(Object.prototype.toString.call(this.token.created), '[object Date]');
   });
 
-  it('should be validateable', function(done) {
-    this.token.validate(function(err, isValid) {
-      assert(isValid);
-      done();
+  describe('.validate()', function() {
+    before(createExpiredTestingToken);
+
+    it('should validate good tokens', function(done) {
+      this.token.validate(function(err, isValid) {
+        assert(!err);
+        assert(isValid);
+        done();
+      });
+    });
+
+    it('should not validate expired tokens', function(done) {
+      this.expiredToken.validate(function(err, isValid) {
+        assert(!err);
+        assert(!isValid);
+        done();
+      });
     });
   });
 
   describe('.findForRequest()', function() {
-    beforeEach(createTestingToken);
 
     it('supports two-arg variant with no options', function(done) {
       var expectedTokenId = this.token.id;
@@ -231,7 +243,7 @@ describe('AccessToken', function() {
 });
 
 describe('app.enableAuth()', function() {
-  beforeEach(createTestingToken);
+  beforeEach(createValidTestingToken);
 
   it('prevents remote call with 401 status on denied ACL', function(done) {
     createTestAppAndRequest(this.token, done)
@@ -329,11 +341,21 @@ describe('app.enableAuth()', function() {
   });
 });
 
-function createTestingToken(done) {
+function createValidTestingToken(done) {
   var test = this;
   Token.create({userId: '123'}, function(err, token) {
     if (err) return done(err);
     test.token = token;
+    done();
+  });
+}
+
+function createExpiredTestingToken(done) {
+  var test = this;
+  var created = Date.now() - 120000;
+  Token.create({userId: '123', created: created, ttl:60}, function(err, token) {
+    if (err) return done(err);
+    test.expiredToken = token;
     done();
   });
 }
